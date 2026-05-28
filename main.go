@@ -77,6 +77,8 @@ func readInput(reader *bufio.Reader, prompt string) (string, error) {
 func main() {
 	reader := bufio.NewReader(os.Stdin)
 
+	fmt.Println("Hello, World!")
+
 	users := map[string]*User{
 		"tom_99":  {ID: 1, Username: "tom_99", FirstName: "Tom", LastName: "Hollands", Balance: 1000},
 		"nik_22":  {ID: 2, Username: "nik_22", FirstName: "Nik", LastName: "Luks", Balance: 2000},
