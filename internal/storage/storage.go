@@ -15,7 +15,7 @@ const filePath = "users.txt"
 func LoadUser(username string) (*service.User, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("файл користувачів не знайдено")
+		return nil, fmt.Errorf("user file not found")
 	}
 	defer file.Close()
 
@@ -29,7 +29,7 @@ func LoadUser(username string) (*service.User, error) {
 			return user, nil
 		}
 	}
-	return nil, fmt.Errorf("користувача '%s' не знайдено", username)
+	return nil, fmt.Errorf("user '%s' not found", username)
 }
 
 func UpdateBalance(user *service.User) error {
@@ -103,7 +103,7 @@ func GetNextID() int64 {
 func parseLine(line string) (*service.User, error) {
 	parts := strings.Split(line, "|")
 	if len(parts) != 6 {
-		return nil, fmt.Errorf("невірний формат")
+		return nil, fmt.Errorf("invalid format")
 	}
 	id, err := strconv.ParseInt(parts[0], 10, 64)
 	if err != nil {

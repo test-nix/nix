@@ -13,86 +13,27 @@ import (
 	"example/internal/transport"
 )
 
-func loginOrRegister(reader *bufio.Reader) (*service.User, error) {
-	fmt.Println("\n1. Увійти")
-	fmt.Println("2. Зареєструватись")
-
-	choice, _ := transport.ReadInput(reader, "Виберіть: ")
-	switch choice {
-	case "1":
-		return login(reader)
-	case "2":
-		return register(reader)
-	default:
-		return nil, fmt.Errorf("невідома команда")
-	}
-}
-
-func login(reader *bufio.Reader) (*service.User, error) {
-	username, _ := transport.ReadInput(reader, "Username: ")
-	password, _ := transport.ReadInput(reader, "Пароль: ")
-
-	user, err := storage.LoadUser(username)
-	if err != nil {
-		return nil, err
-	}
-	if user.Password != password {
-		return nil, fmt.Errorf("невірний пароль")
-	}
-	return user, nil
-}
-
-func register(reader *bufio.Reader) (*service.User, error) {
-	username, _ := transport.ReadInput(reader, "Введіть username: ")
-
-	_, err := storage.LoadUser(username)
-	if err == nil {
-		return nil, fmt.Errorf("користувач '%s' вже існує", username)
-	}
-
-	firstname, _ := transport.ReadInput(reader, "Введіть імʼя: ")
-	lastname, _ := transport.ReadInput(reader, "Введіть прізвище: ")
-	password, _ := transport.ReadInput(reader, "Придумайте пароль: ")
-
-	user := &service.User{
-		ID:        storage.GetNextID(),
-		Username:  username,
-		FirstName: firstname,
-		LastName:  lastname,
-		Balance:   0,
-		Password:  password,
-	}
-
-	err = storage.RegisterUser(user)
-	if err != nil {
-		return nil, fmt.Errorf("помилка реєстрації: %w", err)
-	}
-
-	fmt.Println("✓ Реєстрація успішна!")
-	return user, nil
-}
-
 func main() {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("Ласкаво просимо!")
+	fmt.Println("Welcome!")
 
-	user, err := loginOrRegister(reader)
+	user, err := transport.LoginOrRegister(reader)
 	if err != nil {
-		fmt.Println("Помилка:", err)
+		fmt.Println("Error:", err)
 		return
 	}
 
-	fmt.Printf("Привіт, %s!\n", user.FirstName)
+	fmt.Printf("Hello, %s!\n", user.FirstName)
 
 	for {
-		fmt.Println("\n--- Меню ---")
-		fmt.Println("1. Поповнити / зняти кошти")
-		fmt.Println("2. Переглянути баланс")
-		fmt.Println("/help — довідка  |  0 — Вихід")
+		fmt.Println("\n--- Menu ---")
+		fmt.Println("1. Deposit / withdraw funds")
+		fmt.Println("2. View balance")
+		fmt.Println("/help — help  |  0 — Exit")
 
-		choice, err := transport.ReadInput(reader, "Виберіть дію: ")
+		choice, err := transport.ReadInput(reader, "Select action: ")
 		if err != nil {
-			fmt.Println("Помилка читання:", err)
+			fmt.Println("Reading error:", err)
 			continue
 		}
 
@@ -101,29 +42,29 @@ func main() {
 			continue
 		}
 		if choice == service.ExitCommand {
-			fmt.Println("До побачення!")
+			fmt.Println("Goodbye!")
 			break
 		}
 
 		switch choice {
 		case service.TransactCommand:
-			input, _ := transport.ReadInput(reader, "Введіть суму в доларах: ")
+			input, _ := transport.ReadInput(reader, "Enter amount in dollars: ")
 			amount, err := strconv.ParseInt(input, 10, 64)
 			if err != nil {
-				fmt.Println("Помилка: введено не число.")
+				fmt.Println("Error: entered not a number.")
 				continue
 			}
 			err = service.ProcessTransaction(user, amount)
 			if errors.Is(err, service.ErrInsufficientFunds) {
-				fmt.Printf("✗ Недостатньо коштів! Баланс: $%d\n", user.Balance)
+				fmt.Printf("✗ Insufficient funds! Balance: $%d\n", user.Balance)
 			} else if errors.Is(err, service.ErrZeroAmount) {
-				fmt.Println("✗ Введіть ненульову суму")
+				fmt.Println("✗ Enter a non-zero sum")
 			} else {
 				err = storage.UpdateBalance(user)
 				if err != nil {
-					fmt.Println("Помилка збереження:", err)
+					fmt.Println("Saving error:", err)
 				} else {
-					fmt.Printf("✓ Успішно. Новий баланс: $%d\n", user.Balance)
+					fmt.Printf("✓ Success. New balance: $%d\n", user.Balance)
 				}
 			}
 
@@ -131,7 +72,7 @@ func main() {
 			helper.PrintUserInfo(user)
 
 		default:
-			fmt.Println("Невідома команда. Введіть /help для довідки.")
+			fmt.Println("Unknown command. Enter /help for help.")
 		}
 	}
 }
